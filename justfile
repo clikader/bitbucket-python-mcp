@@ -19,7 +19,7 @@ alias o := outdated
 
 # Run the MCP server
 run:
-    uv run bitbucket-mcp
+    uv run bitbucket-python-mcp
 
 # Run tests
 test:
@@ -61,7 +61,7 @@ publish-test:
 
 # Run server in development mode with debug logging
 dev:
-    BITBUCKET_MCP_DEBUG=1 uv run bitbucket-mcp
+    BITBUCKET_MCP_DEBUG=1 uv run bitbucket-python-mcp
 
 # Bump version (major, minor, or patch)
 [doc("Bump version: just bump-version <major|minor|patch>")]

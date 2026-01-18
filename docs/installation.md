@@ -15,7 +15,7 @@ This guide covers all the ways to install and configure the BitBucket MCP Server
 The simplest way to run the BitBucket MCP server is using `uvx`, which handles installation automatically:
 
 ```bash
-uvx bitbucket-mcp
+uvx bitbucket-python-mcp
 ```
 
 This will download and run the latest version from PyPI.
@@ -25,20 +25,20 @@ This will download and run the latest version from PyPI.
 Install the package globally or in a virtual environment:
 
 ```bash
-pip install bitbucket-mcp
+pip install bitbucket-python-mcp
 ```
 
 Then run:
 
 ```bash
-bitbucket-mcp
+bitbucket-python-mcp
 ```
 
 ### Method 3: Using uv
 
 ```bash
-uv add bitbucket-mcp
-uv run bitbucket-mcp
+uv add bitbucket-python-mcp
+uv run bitbucket-python-mcp
 ```
 
 ### Method 4: From Source
@@ -54,7 +54,7 @@ cd bitbucket-python-mcp
 uv sync
 
 # Run the server
-uv run bitbucket-mcp
+uv run bitbucket-python-mcp
 ```
 
 ## Setting Up BitBucket App Password
@@ -81,7 +81,7 @@ Create or edit `~/.claude/claude_desktop_config.json`:
   "mcpServers": {
     "bitbucket": {
       "command": "uvx",
-      "args": ["bitbucket-mcp"],
+      "args": ["bitbucket-python-mcp"],
       "env": {
         "BITBUCKET_USERNAME": "your-username",
         "BITBUCKET_API_TOKEN": "your-api-token",
@@ -110,7 +110,7 @@ Then configure the MCP server without inline env vars:
   "mcpServers": {
     "bitbucket": {
       "command": "uvx",
-      "args": ["bitbucket-mcp"]
+      "args": ["bitbucket-python-mcp"]
     }
   }
 }
@@ -121,7 +121,7 @@ Then configure the MCP server without inline env vars:
 To verify the installation is working:
 
 1. Set the required environment variables
-2. Run `uvx bitbucket-mcp` or `bitbucket-mcp`
+2. Run `uvx bitbucket-python-mcp` or `bitbucket-python-mcp`
 3. The server should start without errors
 
 If you see an error about missing environment variables, ensure all required variables are set.

@@ -16,13 +16,13 @@ A Model Context Protocol (MCP) server for BitBucket Cloud operations. This serve
 ### Using uvx (Recommended)
 
 ```bash
-uvx bitbucket-mcp
+uvx bitbucket-python-mcp
 ```
 
 ### Using pip
 
 ```bash
-pip install bitbucket-mcp
+pip install bitbucket-python-mcp
 ```
 
 ### From Source
@@ -65,7 +65,7 @@ Add to your `~/.claude/claude_desktop_config.json`:
   "mcpServers": {
     "bitbucket": {
       "command": "uvx",
-      "args": ["bitbucket-mcp"],
+      "args": ["bitbucket-python-mcp"],
       "env": {
         "BITBUCKET_USERNAME": "your-username",
         "BITBUCKET_API_TOKEN": "your-api-token",
@@ -83,7 +83,7 @@ Add to your `~/.codex/config.toml`:
 ```toml
 [mcp_servers.bitbucket]
 command = "uvx"
-args = ["bitbucket-mcp"]
+args = ["bitbucket-python-mcp"]
 
 [mcp_servers.bitbucket.env]
 BITBUCKET_USERNAME = "your-username"
@@ -98,7 +98,7 @@ codex mcp add bitbucket \
   --env BITBUCKET_USERNAME=your-username \
   --env BITBUCKET_API_TOKEN=your-api-token \
   --env BITBUCKET_WORKSPACE=your-workspace \
-  -- uvx bitbucket-mcp
+  -- uvx bitbucket-python-mcp
 ```
 
 Verify the server is configured:
@@ -116,9 +116,9 @@ export BITBUCKET_API_TOKEN="your-api-token"
 export BITBUCKET_WORKSPACE="your-workspace"
 
 # Run the server
-uvx bitbucket-mcp
+uvx bitbucket-python-mcp
 # or
-uv run bitbucket-mcp
+uv run bitbucket-python-mcp
 ```
 
 ## Available Tools

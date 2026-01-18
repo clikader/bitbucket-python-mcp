@@ -92,7 +92,7 @@ Enable debug logging for troubleshooting:
 
 ```bash
 export BITBUCKET_MCP_DEBUG=1
-uvx bitbucket-mcp
+uvx bitbucket-python-mcp
 ```
 
 This will output detailed information about:
@@ -117,7 +117,7 @@ export BITBUCKET_WORKSPACE="my-workspace"
   "mcpServers": {
     "bitbucket": {
       "command": "uvx",
-      "args": ["bitbucket-mcp"],
+      "args": ["bitbucket-python-mcp"],
       "env": {
         "BITBUCKET_USERNAME": "johndoe",
         "BITBUCKET_API_TOKEN": "ATBBxxxxxxxx",
@@ -140,5 +140,5 @@ export BITBUCKET_MCP_DEBUG="1"
 
 # Run from source
 cd bitbucket-python-mcp
-uv run bitbucket-mcp
+uv run bitbucket-python-mcp
 ```
