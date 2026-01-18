@@ -1,12 +1,12 @@
 [project]
-name = "bitbucket-mcp"
-version = "0.1.0"
+name = "bitbucket-python-mcp"
+version = "0.1.2"
 description = "A Model Context Protocol (MCP) server for BitBucket Cloud operations"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.12"
-authors = [{ name = "Your Name", email = "your.email@example.com" }]
-keywords = ["mcp", "bitbucket", "ai", "claude", "model-context-protocol"]
+authors = [{ name = "clikader", email = "pypi@clikader.com" }]
+keywords = ["mcp", "bitbucket", "ai", "claude", "codex", "model-context-protocol"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -29,15 +29,16 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "ruff>=0.4.0",
+    "bump-my-version>=0.28.0",
 ]
 
 [project.scripts]
 bitbucket-mcp = "bitbucket_mcp.server:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/bitbucket-python-mcp"
-Repository = "https://github.com/yourusername/bitbucket-python-mcp"
-Issues = "https://github.com/yourusername/bitbucket-python-mcp/issues"
+Homepage = "https://github.com/clikader/bitbucket-python-mcp"
+Repository = "https://github.com/clikader/bitbucket-python-mcp"
+Issues = "https://github.com/clikader/bitbucket-python-mcp/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -77,3 +78,24 @@ known-first-party = ["bitbucket_mcp"]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.bumpversion]
+current_version = "0.1.2"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+commit = false
+allow_dirty = true
+tag = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+message = "Bump version: {current_version} → {new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+filename = "src/bitbucket_mcp/__init__.py"
+search = "__version__ = \"{current_version}\""
+replace = "__version__ = \"{new_version}\""

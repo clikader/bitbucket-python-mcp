@@ -1,3 +1,3 @@
 """BitBucket MCP Server - Model Context Protocol server for BitBucket Cloud operations."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.2"

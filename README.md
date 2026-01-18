@@ -76,6 +76,37 @@ Add to your `~/.claude/claude_desktop_config.json`:
 }
 ```
 
+### OpenAI Codex CLI
+
+Add to your `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.bitbucket]
+command = "uvx"
+args = ["bitbucket-mcp"]
+
+[mcp_servers.bitbucket.env]
+BITBUCKET_USERNAME = "your-username"
+BITBUCKET_API_TOKEN = "your-api-token"
+BITBUCKET_WORKSPACE = "your-workspace"
+```
+
+Alternatively, use the Codex CLI to add the server:
+
+```bash
+codex mcp add bitbucket \
+  --env BITBUCKET_USERNAME=your-username \
+  --env BITBUCKET_API_TOKEN=your-api-token \
+  --env BITBUCKET_WORKSPACE=your-workspace \
+  -- uvx bitbucket-mcp
+```
+
+Verify the server is configured:
+
+```bash
+codex mcp list
+```
+
 ### Running Locally
 
 ```bash

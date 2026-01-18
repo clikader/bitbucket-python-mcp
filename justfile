@@ -12,6 +12,11 @@ install:
 install-dev:
     uv sync --all-extras
 
+alias o := outdated
+@outdated:
+    # Show outdated packages, direct dependencies only, with headers, as long as uv is installed, uvx can be used, no need to install in repo
+    uvx uv-outdated --direct --show-headers
+
 # Run the MCP server
 run:
     uv run bitbucket-mcp
@@ -57,3 +62,11 @@ publish-test:
 # Run server in development mode with debug logging
 dev:
     BITBUCKET_MCP_DEBUG=1 uv run bitbucket-mcp
+
+# Bump version (major, minor, or patch)
+[doc("Bump version: just bump-version <major|minor|patch>")]
+bump-version part:
+    uv run bump-my-version bump {{part}}
+
+# Alias for bump-version
+alias bv := bump-version
