@@ -13,6 +13,7 @@ from bitbucket_mcp.tools import (
     register_pull_request_tools,
     register_repository_tools,
     register_search_tools,
+    register_user_tools,
 )
 
 # Configure logging
@@ -37,7 +38,24 @@ mcp = FastMCP(
     - Branch management (create, delete, list)
     - Pull request operations (create, review, approve, comment)
     - Code search and repository content browsing
+    - User search and workspace member lookup
     - Memory system for storing workspace standards and learnings
+
+    CREATING PULL REQUESTS WITH REVIEWERS:
+    When creating a PR with specific reviewers mentioned by name:
+    1. First use search_workspace_users to find the user by name
+    2. If multiple matches found, ask the user to choose
+    3. If no match found, inform the user that the name was not found in the workspace
+    4. Once the user is found, their info is automatically cached in memory
+    5. Pass the account_id to create_pull_request's reviewer_account_ids parameter
+    6. Default reviewers are automatically included unless disabled
+
+    Example workflow for "Create a PR and add Boris as reviewer":
+    1. Call search_workspace_users(query="Boris")
+    2. If found, note the account_id (e.g., "5b1234567890abcdef")
+    3. Call create_pull_request(title="...", reviewer_account_ids="5b1234567890abcdef")
+
+    For tagging users in comments, use @{mention_name} format from search results.
 
     MEMORY SYSTEM:
     This server includes a memory system that stores learnings, standards, and patterns
@@ -70,6 +88,7 @@ register_branch_tools(mcp)
 register_pull_request_tools(mcp)
 register_search_tools(mcp)
 register_memory_tools(mcp)
+register_user_tools(mcp)
 
 
 def main():

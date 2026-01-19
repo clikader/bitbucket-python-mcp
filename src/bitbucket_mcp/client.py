@@ -387,10 +387,24 @@ class BitBucketClient:
         title: str,
         workspace: str | None = None,
         description: str = "",
-        reviewers: list[str] | None = None,
+        reviewers: list[dict[str, str]] | None = None,
         close_source_branch: bool = False,
     ) -> dict[str, Any]:
-        """Create a new pull request."""
+        """Create a new pull request.
+
+        Args:
+            repository: Repository slug.
+            source_branch: Branch containing the changes to merge.
+            destination_branch: Branch to merge into.
+            title: Title of the pull request.
+            workspace: Workspace slug. If None, uses default workspace.
+            description: Optional description of the changes.
+            reviewers: List of reviewer dicts with 'account_id' or 'uuid' key.
+            close_source_branch: Whether to close the source branch after merge.
+
+        Returns:
+            The created pull request data.
+        """
         ws = self.resolve_workspace(workspace)
 
         def _create():
@@ -403,7 +417,8 @@ class BitBucketClient:
                 "close_source_branch": close_source_branch,
             }
             if reviewers:
-                pr_data["reviewers"] = [{"username": r} for r in reviewers]
+                # BitBucket API accepts reviewers with account_id or uuid
+                pr_data["reviewers"] = reviewers
 
             response = self.cloud._session.post(url, json=pr_data)
             response.raise_for_status()
@@ -462,6 +477,229 @@ class BitBucketClient:
             return results
 
         return await asyncio.to_thread(_search)
+
+    # User operations
+
+    async def get_current_user(self) -> dict[str, Any]:
+        """Get the authenticated user's account information.
+
+        Returns:
+            User account details including display_name, account_id, uuid.
+        """
+        def _get():
+            url = "https://api.bitbucket.org/2.0/user"
+            response = self.cloud._session.get(url)
+            response.raise_for_status()
+            return response.json()
+
+        return await asyncio.to_thread(_get)
+
+    async def get_current_user_emails(self) -> list[dict[str, Any]]:
+        """Get the authenticated user's email addresses.
+
+        Returns:
+            List of email addresses with is_primary and is_confirmed flags.
+        """
+        def _get():
+            url = "https://api.bitbucket.org/2.0/user/emails"
+            emails = []
+            while url:
+                response = self.cloud._session.get(url)
+                response.raise_for_status()
+                data = response.json()
+                emails.extend(data.get("values", []))
+                url = data.get("next")
+            return emails
+
+        return await asyncio.to_thread(_get)
+
+    # Workspace member operations
+
+    async def list_workspace_members(
+        self, workspace: str | None = None
+    ) -> list[dict[str, Any]]:
+        """List all members in a workspace.
+
+        First tries the workspace members API (requires admin). Falls back to
+        aggregating users from repository default reviewers and PR participants.
+
+        Args:
+            workspace: Workspace slug. If None, uses default workspace.
+
+        Returns:
+            List of workspace members with their details.
+        """
+        ws = self.resolve_workspace(workspace)
+
+        # Try workspace members API first (requires admin permissions)
+        def _list_members():
+            url = f"https://api.bitbucket.org/2.0/workspaces/{ws}/members"
+            members = []
+            while url:
+                response = self.cloud._session.get(url)
+                response.raise_for_status()
+                data = response.json()
+                members.extend(data.get("values", []))
+                url = data.get("next")
+            return members
+
+        try:
+            return await asyncio.to_thread(_list_members)
+        except Exception:
+            # Fallback: aggregate users from repos if members API fails
+            return await self._aggregate_workspace_users(ws)
+
+    async def _aggregate_workspace_users(
+        self, workspace: str
+    ) -> list[dict[str, Any]]:
+        """Aggregate users from default reviewers and PR participants.
+
+        This is a fallback when workspace members API is not accessible.
+        """
+        all_users: dict[str, dict[str, Any]] = {}
+
+        # Get repositories
+        repos = await self.list_repositories(workspace)
+
+        for repo in repos[:15]:  # Limit to first 15 repos for performance
+            repo_slug = repo.get("slug")
+            if not repo_slug:
+                continue
+
+            # Get default reviewers
+            try:
+                reviewers = await self.get_default_reviewers(repo_slug, workspace)
+                for r in reviewers:
+                    aid = r.get("account_id")
+                    if aid and aid not in all_users:
+                        all_users[aid] = {"user": r}
+            except Exception:
+                pass
+
+            # Get PR participants (check both open and recent merged)
+            for state in ["OPEN", "MERGED"]:
+                try:
+                    prs = await self.list_pull_requests(repo_slug, workspace, state)
+                    for pr in prs[:10]:  # Limit PRs per repo
+                        # Check participants
+                        for p in pr.get("participants", []):
+                            user = p.get("user", {})
+                            aid = user.get("account_id")
+                            if aid and aid not in all_users:
+                                all_users[aid] = {"user": user}
+
+                        # Check author
+                        author = pr.get("author", {})
+                        aid = author.get("account_id")
+                        if aid and aid not in all_users:
+                            all_users[aid] = {"user": author}
+
+                        # Check reviewers
+                        for r in pr.get("reviewers", []):
+                            aid = r.get("account_id")
+                            if aid and aid not in all_users:
+                                all_users[aid] = {"user": r}
+                except Exception:
+                    pass
+
+        return list(all_users.values())
+
+    async def search_workspace_users(
+        self,
+        query: str,
+        workspace: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Search for users in a workspace by name or email.
+
+        Args:
+            query: Search query (name or email substring).
+            workspace: Workspace slug. If None, uses default workspace.
+
+        Returns:
+            List of matching users.
+        """
+        members = await self.list_workspace_members(workspace)
+        query_lower = query.lower()
+
+        results = []
+        for member in members:
+            user = member.get("user", {})
+            display_name = user.get("display_name", "").lower()
+            nickname = user.get("nickname", "").lower()
+            account_id = user.get("account_id", "")
+
+            # Check if query matches display name, nickname, or account_id
+            if (
+                query_lower in display_name
+                or query_lower in nickname
+                or query_lower == account_id
+            ):
+                results.append({
+                    "account_id": account_id,
+                    "uuid": user.get("uuid", ""),
+                    "display_name": user.get("display_name", ""),
+                    "nickname": user.get("nickname", ""),
+                    "type": user.get("type", ""),
+                    "links": user.get("links", {}),
+                })
+
+        return results
+
+    async def get_default_reviewers(
+        self, repository: str, workspace: str | None = None
+    ) -> list[dict[str, Any]]:
+        """Get default reviewers for a repository.
+
+        Args:
+            repository: Repository slug.
+            workspace: Workspace slug. If None, uses default workspace.
+
+        Returns:
+            List of default reviewers with their details.
+        """
+        ws = self.resolve_workspace(workspace)
+
+        def _get():
+            url = f"https://api.bitbucket.org/2.0/repositories/{ws}/{repository}/default-reviewers"
+            reviewers = []
+            while url:
+                response = self.cloud._session.get(url)
+                response.raise_for_status()
+                data = response.json()
+                reviewers.extend(data.get("values", []))
+                url = data.get("next")
+            return reviewers
+
+        return await asyncio.to_thread(_get)
+
+    async def get_file_content(
+        self,
+        repository: str,
+        file_path: str,
+        ref: str | None = None,
+        workspace: str | None = None,
+    ) -> str:
+        """Get raw file content from a repository.
+
+        Args:
+            repository: Repository slug.
+            file_path: Path to the file.
+            ref: Branch, tag, or commit hash (default: HEAD).
+            workspace: Workspace slug. If None, uses default workspace.
+
+        Returns:
+            The raw file content as a string.
+        """
+        ws = self.resolve_workspace(workspace)
+
+        def _get():
+            commit_ref = ref or "HEAD"
+            url = f"https://api.bitbucket.org/2.0/repositories/{ws}/{repository}/src/{commit_ref}/{file_path}"
+            response = self.cloud._session.get(url)
+            response.raise_for_status()
+            return response.text
+
+        return await asyncio.to_thread(_get)
 
 
 # Global client instance (lazy initialization)

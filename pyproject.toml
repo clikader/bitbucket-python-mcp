@@ -1,6 +1,6 @@
 [project]
 name = "bitbucket-python-mcp"
-version = "0.1.3"
+version = "0.2.0"
 description = "A Model Context Protocol (MCP) server for BitBucket Cloud operations"
 readme = "README.md"
 license = { text = "MIT" }
@@ -80,7 +80,7 @@ testpaths = ["tests"]
 pythonpath = ["src"]
 
 [tool.bumpversion]
-current_version = "0.1.3"
+current_version = "0.2.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 commit = false

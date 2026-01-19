@@ -168,4 +168,9 @@ def mock_bitbucket_client(
     mock.resolve_workspace = MagicMock(side_effect=lambda w: w or "test-workspace")
     mock.resolve_repository = MagicMock(side_effect=lambda r: r)
 
+    # User/member operations
+    mock.list_workspace_members = AsyncMock(return_value=[])
+    mock.search_workspace_users = AsyncMock(return_value=[])
+    mock.get_default_reviewers = AsyncMock(return_value=[])
+
     return mock

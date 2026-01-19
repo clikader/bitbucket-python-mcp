@@ -5,7 +5,7 @@ import json
 from mcp.server.fastmcp import FastMCP
 
 from bitbucket_mcp.client import get_client
-from bitbucket_mcp.config import get_current_repo
+from bitbucket_mcp.config import PROTECTED_BRANCHES, get_current_branch, get_current_repo
 
 
 def register_pull_request_tools(mcp: FastMCP) -> None:
@@ -424,27 +424,39 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     async def create_pull_request(
         title: str,
-        source_branch: str,
-        destination_branch: str = "development",
+        source_branch: str | None = None,
+        destination_branch: str | None = None,
         description: str = "",
         repository: str | None = None,
         workspace: str | None = None,
-        reviewers: str | None = None,
+        reviewer_account_ids: str | None = None,
+        include_default_reviewers: bool = True,
         close_source_branch: bool = False,
     ) -> str:
         """Create a new pull request.
 
         Use this tool to create a pull request for merging changes from one branch
-        to another.
+        to another. Supports auto-detection of source branch and smart destination
+        selection.
+
+        Workflow for adding reviewers:
+        1. First use search_workspace_users to find users by name
+        2. Pass the account_id(s) from the search results to reviewer_account_ids
+        3. Default reviewers are automatically included unless disabled
 
         Args:
             title: Title of the pull request.
-            source_branch: Branch containing the changes to merge.
-            destination_branch: Branch to merge into (default: 'development').
+            source_branch: Branch containing the changes. If not provided, uses the
+                current git branch. Cannot be main/master/development.
+            destination_branch: Branch to merge into. If not provided, defaults to
+                'development' for feature/bugfix branches.
             description: Optional description of the changes.
             repository: Repository slug. If not provided, uses current repository context.
             workspace: Workspace slug. If not provided, uses the default workspace.
-            reviewers: Comma-separated list of reviewer usernames (optional).
+            reviewer_account_ids: Comma-separated list of reviewer account_ids to add
+                as additional reviewers (use search_workspace_users to find these).
+            include_default_reviewers: If True (default), includes repository's default
+                reviewers in addition to any specified reviewers.
             close_source_branch: Whether to close the source branch after merge.
 
         Returns:
@@ -463,14 +475,62 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
                 return json.dumps(
                     {
                         "error": "No repository specified",
-                        "message": "Please provide a repository name.",
+                        "message": "Please provide a repository name, or run this command "
+                        "from within a git repository with a BitBucket remote.",
                     },
                     indent=2,
                 )
 
-        reviewer_list = None
-        if reviewers:
-            reviewer_list = [r.strip() for r in reviewers.split(",")]
+        # Auto-detect source branch if not provided
+        if source_branch is None:
+            source_branch = get_current_branch()
+            if source_branch is None:
+                return json.dumps(
+                    {
+                        "error": "Cannot detect source branch",
+                        "message": "Please provide a source_branch parameter or run this "
+                        "command from within a git repository.",
+                    },
+                    indent=2,
+                )
+
+        # Validate source branch is not a protected branch
+        if source_branch.lower() in PROTECTED_BRANCHES:
+            return json.dumps(
+                {
+                    "error": "Invalid source branch",
+                    "message": f"Cannot create PR from protected branch '{source_branch}'. "
+                    f"Protected branches are: {', '.join(sorted(PROTECTED_BRANCHES))}",
+                },
+                indent=2,
+            )
+
+        # Auto-select destination branch if not provided
+        if destination_branch is None:
+            destination_branch = "development"
+
+        # Collect reviewers
+        reviewers: list[dict[str, str]] = []
+
+        # Add default reviewers if requested
+        if include_default_reviewers:
+            try:
+                default_reviewers = await client.get_default_reviewers(repository, workspace)
+                for reviewer in default_reviewers:
+                    account_id = reviewer.get("account_id")
+                    if account_id:
+                        reviewers.append({"account_id": account_id})
+            except Exception:
+                # Default reviewers might not be configured, continue without them
+                pass
+
+        # Add additional specified reviewers
+        if reviewer_account_ids:
+            for account_id in reviewer_account_ids.split(","):
+                account_id = account_id.strip()
+                # Avoid duplicates
+                if account_id and not any(r.get("account_id") == account_id for r in reviewers):
+                    reviewers.append({"account_id": account_id})
 
         pr = await client.create_pull_request(
             repository=repository,
@@ -479,9 +539,18 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
             title=title,
             workspace=workspace,
             description=description,
-            reviewers=reviewer_list,
+            reviewers=reviewers if reviewers else None,
             close_source_branch=close_source_branch,
         )
+
+        # Format reviewer info for response
+        pr_reviewers = [
+            {
+                "display_name": r.get("display_name", ""),
+                "account_id": r.get("account_id", ""),
+            }
+            for r in pr.get("reviewers", [])
+        ]
 
         return json.dumps(
             {
@@ -490,6 +559,7 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
                 "title": pr.get("title"),
                 "source_branch": pr.get("source", {}).get("branch", {}).get("name", ""),
                 "destination_branch": pr.get("destination", {}).get("branch", {}).get("name", ""),
+                "reviewers": pr_reviewers,
                 "url": pr.get("links", {}).get("html", {}).get("href", ""),
             },
             indent=2,
