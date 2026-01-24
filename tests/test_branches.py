@@ -72,9 +72,9 @@ class TestBranchTools:
                 data = json.loads(result)
 
                 assert isinstance(data, list)
-                # Verify the client was called with context values
+                # Verify the client was called with context values (including default limit)
                 mock_bitbucket_client.list_branches.assert_called_with(
-                    "context-repo", "context-workspace"
+                    "context-repo", "context-workspace", 50
                 )
 
     @pytest.mark.asyncio

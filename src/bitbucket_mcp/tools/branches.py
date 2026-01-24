@@ -15,16 +15,18 @@ def register_branch_tools(mcp: FastMCP) -> None:
     async def list_branches(
         repository: str | None = None,
         workspace: str | None = None,
+        limit: int = 50,
     ) -> str:
-        """List all branches in a BitBucket repository.
+        """List branches in a BitBucket repository.
 
-        Use this tool to see all available branches in a repository, including
+        Use this tool to see available branches in a repository, including
         their names and latest commit information.
 
         Args:
             repository: Repository slug. If not provided and working in a git repo
                        with a BitBucket remote, will use the current repository.
             workspace: Workspace slug. If not provided, uses the default workspace.
+            limit: Maximum number of branches to return. Default 50.
 
         Returns:
             JSON list of branches with their names and target commit info.
@@ -48,7 +50,7 @@ def register_branch_tools(mcp: FastMCP) -> None:
                     indent=2,
                 )
 
-        branches = await client.list_branches(repository, workspace)
+        branches = await client.list_branches(repository, workspace, limit)
 
         result = []
         for branch in branches:

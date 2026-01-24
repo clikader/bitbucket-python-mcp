@@ -154,6 +154,7 @@ def register_search_tools(mcp: FastMCP) -> None:
         query: str,
         repository: str | None = None,
         workspace: str | None = None,
+        limit: int = 20,
     ) -> str:
         """Search for code patterns in a BitBucket repository.
 
@@ -164,6 +165,7 @@ def register_search_tools(mcp: FastMCP) -> None:
             query: Search query for code content.
             repository: Repository slug. If not provided, uses current repository context.
             workspace: Workspace slug. If not provided, uses the default workspace.
+            limit: Maximum number of results to return. Default 20.
 
         Returns:
             JSON list of matching code locations with snippets.
@@ -188,7 +190,7 @@ def register_search_tools(mcp: FastMCP) -> None:
                 )
 
         try:
-            results = await client.search_code(repository, query, workspace)
+            results = await client.search_code(repository, query, workspace, limit)
 
             formatted = []
             for result in results:

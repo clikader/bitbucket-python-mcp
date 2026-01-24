@@ -11,8 +11,8 @@ def register_repository_tools(mcp: FastMCP) -> None:
     """Register repository management tools with the MCP server."""
 
     @mcp.tool()
-    async def list_repositories(workspace: str | None = None) -> str:
-        """List all repositories in a BitBucket workspace.
+    async def list_repositories(workspace: str | None = None, limit: int = 50) -> str:
+        """List repositories in a BitBucket workspace.
 
         This is the primary tool for discovering repositories. Use this when the user
         wants to see what repositories are available or when searching for a specific
@@ -21,12 +21,13 @@ def register_repository_tools(mcp: FastMCP) -> None:
         Args:
             workspace: Workspace slug. If not provided, uses the default workspace
                       from BITBUCKET_WORKSPACE environment variable.
+            limit: Maximum number of repositories to return. Default 50.
 
         Returns:
             JSON list of repositories with their names, descriptions, and URLs.
         """
         client = get_client()
-        repos = await client.list_repositories(workspace)
+        repos = await client.list_repositories(workspace, limit)
 
         # Format the response with key information
         result = []

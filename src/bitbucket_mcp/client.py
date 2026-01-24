@@ -82,20 +82,30 @@ class BitBucketClient:
 
     # Repository operations
 
-    async def list_repositories(self, workspace: str | None = None) -> list[dict[str, Any]]:
-        """List all repositories in a workspace."""
+    async def list_repositories(
+        self, workspace: str | None = None, limit: int = 50
+    ) -> list[dict[str, Any]]:
+        """List repositories in a workspace.
+
+        Args:
+            workspace: Workspace slug.
+            limit: Maximum number of repositories to return. Default 50.
+        """
         ws = self.resolve_workspace(workspace)
 
         def _list():
             url = f"https://api.bitbucket.org/2.0/repositories/{ws}"
+            pagelen = min(limit, 50)
+            params = {"pagelen": pagelen}
             repos = []
-            while url:
-                response = self.cloud._session.get(url)
+            while url and len(repos) < limit:
+                response = self.cloud._session.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
                 repos.extend(data.get("values", []))
                 url = data.get("next")
-            return repos
+                params = None
+            return repos[:limit]
 
         return await asyncio.to_thread(_list)
 
@@ -181,21 +191,30 @@ class BitBucketClient:
     # Branch operations
 
     async def list_branches(
-        self, repository: str, workspace: str | None = None
+        self, repository: str, workspace: str | None = None, limit: int = 50
     ) -> list[dict[str, Any]]:
-        """List all branches in a repository."""
+        """List branches in a repository.
+
+        Args:
+            repository: Repository slug.
+            workspace: Workspace slug.
+            limit: Maximum number of branches to return. Default 50.
+        """
         ws = self.resolve_workspace(workspace)
 
         def _list():
             url = f"https://api.bitbucket.org/2.0/repositories/{ws}/{repository}/refs/branches"
+            pagelen = min(limit, 50)
+            params = {"pagelen": pagelen}
             branches = []
-            while url:
-                response = self.cloud._session.get(url)
+            while url and len(branches) < limit:
+                response = self.cloud._session.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
                 branches.extend(data.get("values", []))
                 url = data.get("next")
-            return branches
+                params = None
+            return branches[:limit]
 
         return await asyncio.to_thread(_list)
 
@@ -468,23 +487,32 @@ class BitBucketClient:
         repository: str,
         query: str,
         workspace: str | None = None,
+        limit: int = 20,
     ) -> list[dict[str, Any]]:
-        """Search for code in a repository."""
+        """Search for code in a repository.
+
+        Args:
+            repository: Repository slug.
+            query: Search query string.
+            workspace: Workspace slug.
+            limit: Maximum number of results to return. Default 20.
+        """
         ws = self.resolve_workspace(workspace)
 
         def _search():
             # BitBucket's code search API
             url = f"https://api.bitbucket.org/2.0/repositories/{ws}/{repository}/search/code"
-            params = {"search_query": query}
+            pagelen = min(limit, 50)
+            params = {"search_query": query, "pagelen": pagelen}
             results = []
-            while url:
+            while url and len(results) < limit:
                 response = self.cloud._session.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
                 results.extend(data.get("values", []))
                 url = data.get("next")
                 params = None
-            return results
+            return results[:limit]
 
         return await asyncio.to_thread(_search)
 
