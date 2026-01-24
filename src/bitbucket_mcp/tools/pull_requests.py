@@ -16,6 +16,7 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
         repository: str | None = None,
         workspace: str | None = None,
         state: str = "OPEN",
+        limit: int = 10,
     ) -> str:
         """List pull requests in a BitBucket repository.
 
@@ -27,6 +28,7 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
             workspace: Workspace slug. If not provided, uses the default workspace.
             state: Filter by state - 'OPEN', 'MERGED', 'DECLINED', or 'SUPERSEDED'.
                    Default is 'OPEN'.
+            limit: Maximum number of pull requests to return. Default 10.
 
         Returns:
             JSON list of pull requests with their titles, authors, and status.
@@ -50,7 +52,7 @@ def register_pull_request_tools(mcp: FastMCP) -> None:
                     indent=2,
                 )
 
-        prs = await client.list_pull_requests(repository, workspace, state)
+        prs = await client.list_pull_requests(repository, workspace, state, limit)
 
         result = []
         for pr in prs:

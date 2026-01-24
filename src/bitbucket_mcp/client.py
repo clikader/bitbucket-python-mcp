@@ -261,22 +261,32 @@ class BitBucketClient:
         repository: str,
         workspace: str | None = None,
         state: str = "OPEN",
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
-        """List pull requests in a repository."""
+        """List pull requests in a repository.
+
+        Args:
+            repository: Repository slug.
+            workspace: Workspace slug.
+            state: Filter by state - 'OPEN', 'MERGED', 'DECLINED', or 'SUPERSEDED'.
+            limit: Maximum number of pull requests to return. Default 10.
+        """
         ws = self.resolve_workspace(workspace)
 
         def _list():
             url = f"https://api.bitbucket.org/2.0/repositories/{ws}/{repository}/pullrequests"
-            params = {"state": state}
+            # Use pagelen to fetch efficiently, capped at 50 per BitBucket API limit
+            pagelen = min(limit, 50)
+            params = {"state": state, "pagelen": pagelen}
             prs = []
-            while url:
+            while url and len(prs) < limit:
                 response = self.cloud._session.get(url, params=params)
                 response.raise_for_status()
                 data = response.json()
                 prs.extend(data.get("values", []))
                 url = data.get("next")
                 params = None  # Next URL includes params
-            return prs
+            return prs[:limit]  # Ensure we don't exceed limit
 
         return await asyncio.to_thread(_list)
 
@@ -486,6 +496,7 @@ class BitBucketClient:
         Returns:
             User account details including display_name, account_id, uuid.
         """
+
         def _get():
             url = "https://api.bitbucket.org/2.0/user"
             response = self.cloud._session.get(url)
@@ -500,6 +511,7 @@ class BitBucketClient:
         Returns:
             List of email addresses with is_primary and is_confirmed flags.
         """
+
         def _get():
             url = "https://api.bitbucket.org/2.0/user/emails"
             emails = []
@@ -515,9 +527,7 @@ class BitBucketClient:
 
     # Workspace member operations
 
-    async def list_workspace_members(
-        self, workspace: str | None = None
-    ) -> list[dict[str, Any]]:
+    async def list_workspace_members(self, workspace: str | None = None) -> list[dict[str, Any]]:
         """List all members in a workspace.
 
         First tries the workspace members API (requires admin). Falls back to
@@ -549,9 +559,7 @@ class BitBucketClient:
             # Fallback: aggregate users from repos if members API fails
             return await self._aggregate_workspace_users(ws)
 
-    async def _aggregate_workspace_users(
-        self, workspace: str
-    ) -> list[dict[str, Any]]:
+    async def _aggregate_workspace_users(self, workspace: str) -> list[dict[str, Any]]:
         """Aggregate users from default reviewers and PR participants.
 
         This is a fallback when workspace members API is not accessible.
@@ -629,19 +637,17 @@ class BitBucketClient:
             account_id = user.get("account_id", "")
 
             # Check if query matches display name, nickname, or account_id
-            if (
-                query_lower in display_name
-                or query_lower in nickname
-                or query_lower == account_id
-            ):
-                results.append({
-                    "account_id": account_id,
-                    "uuid": user.get("uuid", ""),
-                    "display_name": user.get("display_name", ""),
-                    "nickname": user.get("nickname", ""),
-                    "type": user.get("type", ""),
-                    "links": user.get("links", {}),
-                })
+            if query_lower in display_name or query_lower in nickname or query_lower == account_id:
+                results.append(
+                    {
+                        "account_id": account_id,
+                        "uuid": user.get("uuid", ""),
+                        "display_name": user.get("display_name", ""),
+                        "nickname": user.get("nickname", ""),
+                        "type": user.get("type", ""),
+                        "links": user.get("links", {}),
+                    }
+                )
 
         return results
 

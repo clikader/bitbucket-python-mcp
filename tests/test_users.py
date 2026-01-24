@@ -69,9 +69,7 @@ class TestSearchWorkspaceUsers:
     """Tests for search_workspace_users tool."""
 
     @pytest.mark.asyncio
-    async def test_search_users_single_match(
-        self, mock_env_vars, sample_workspace_members
-    ):
+    async def test_search_users_single_match(self, mock_env_vars, sample_workspace_members):
         """Test searching for users with a single match returns correct user."""
         from bitbucket_mcp.tools.users import register_user_tools
 
@@ -82,24 +80,31 @@ class TestSearchWorkspaceUsers:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
         register_user_tools(mock_mcp)
 
-        with patch("bitbucket_mcp.tools.users.get_client") as mock_get_client, \
-             patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None), \
-             patch("bitbucket_mcp.tools.users._cache_user"):
+        with (
+            patch("bitbucket_mcp.tools.users.get_client") as mock_get_client,
+            patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None),
+            patch("bitbucket_mcp.tools.users._cache_user"),
+        ):
             mock_client = MagicMock()
             # Only Boris matches
-            mock_client.search_workspace_users = AsyncMock(return_value=[{
-                "account_id": "5b12345678901234567890ab",
-                "uuid": "{12345678-1234-1234-1234-123456789012}",
-                "display_name": "Boris Miller",
-                "nickname": "boris",
-                "type": "user",
-                "links": {},
-            }])
+            mock_client.search_workspace_users = AsyncMock(
+                return_value=[
+                    {
+                        "account_id": "5b12345678901234567890ab",
+                        "uuid": "{12345678-1234-1234-1234-123456789012}",
+                        "display_name": "Boris Miller",
+                        "nickname": "boris",
+                        "type": "user",
+                        "links": {},
+                    }
+                ]
+            )
             mock_client.default_workspace = "test-workspace"
             mock_get_client.return_value = mock_client
 
@@ -123,28 +128,33 @@ class TestSearchWorkspaceUsers:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
         register_user_tools(mock_mcp)
 
-        with patch("bitbucket_mcp.tools.users.get_client") as mock_get_client, \
-             patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None), \
-             patch("bitbucket_mcp.tools.users._cache_user"):
+        with (
+            patch("bitbucket_mcp.tools.users.get_client") as mock_get_client,
+            patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None),
+            patch("bitbucket_mcp.tools.users._cache_user"),
+        ):
             mock_client = MagicMock()
             # Two Mikes match
-            mock_client.search_workspace_users = AsyncMock(return_value=[
-                {
-                    "account_id": "5b98765432109876543210cd",
-                    "display_name": "Mike Mucha",
-                    "nickname": "mike",
-                },
-                {
-                    "account_id": "5baaaabbbbccccddddeeeeef",
-                    "display_name": "Mike Smith",
-                    "nickname": "mikes",
-                },
-            ])
+            mock_client.search_workspace_users = AsyncMock(
+                return_value=[
+                    {
+                        "account_id": "5b98765432109876543210cd",
+                        "display_name": "Mike Mucha",
+                        "nickname": "mike",
+                    },
+                    {
+                        "account_id": "5baaaabbbbccccddddeeeeef",
+                        "display_name": "Mike Smith",
+                        "nickname": "mikes",
+                    },
+                ]
+            )
             mock_client.default_workspace = "test-workspace"
             mock_get_client.return_value = mock_client
 
@@ -167,13 +177,16 @@ class TestSearchWorkspaceUsers:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
         register_user_tools(mock_mcp)
 
-        with patch("bitbucket_mcp.tools.users.get_client") as mock_get_client, \
-             patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None):
+        with (
+            patch("bitbucket_mcp.tools.users.get_client") as mock_get_client,
+            patch("bitbucket_mcp.tools.users._get_cached_user", return_value=None),
+        ):
             mock_client = MagicMock()
             mock_client.search_workspace_users = AsyncMock(return_value=[])
             mock_client.default_workspace = "test-workspace"
@@ -197,6 +210,7 @@ class TestSearchWorkspaceUsers:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
@@ -208,8 +222,10 @@ class TestSearchWorkspaceUsers:
             "nickname": "cached",
         }
 
-        with patch("bitbucket_mcp.tools.users.get_client") as mock_get_client, \
-             patch("bitbucket_mcp.tools.users._get_cached_user", return_value=cached_user):
+        with (
+            patch("bitbucket_mcp.tools.users.get_client") as mock_get_client,
+            patch("bitbucket_mcp.tools.users._get_cached_user", return_value=cached_user),
+        ):
             mock_client = MagicMock()
             mock_client.search_workspace_users = AsyncMock()
             mock_client.default_workspace = "test-workspace"
@@ -239,12 +255,15 @@ class TestGetCurrentGitBranch:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
         register_user_tools(mock_mcp)
 
-        with patch("bitbucket_mcp.tools.users.get_current_branch", return_value="feature/test-branch"):
+        with patch(
+            "bitbucket_mcp.tools.users.get_current_branch", return_value="feature/test-branch"
+        ):
             result = await tools["get_current_git_branch"]()
             data = json.loads(result)
 
@@ -263,6 +282,7 @@ class TestGetCurrentGitBranch:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
@@ -280,9 +300,7 @@ class TestGetDefaultReviewers:
     """Tests for get_default_reviewers tool."""
 
     @pytest.mark.asyncio
-    async def test_get_default_reviewers_success(
-        self, mock_env_vars, sample_default_reviewer
-    ):
+    async def test_get_default_reviewers_success(self, mock_env_vars, sample_default_reviewer):
         """Test getting default reviewers for a repository."""
         from bitbucket_mcp.tools.users import register_user_tools
 
@@ -293,19 +311,21 @@ class TestGetDefaultReviewers:
             def decorator(func):
                 tools[func.__name__] = func
                 return func
+
             return decorator
 
         mock_mcp.tool = capture_tool
         register_user_tools(mock_mcp)
 
-        with patch("bitbucket_mcp.tools.users.get_client") as mock_get_client, \
-             patch("bitbucket_mcp.tools.users.get_current_repo", return_value=MagicMock(
-                 repository="test-repo", workspace="test-workspace"
-             )):
+        with (
+            patch("bitbucket_mcp.tools.users.get_client") as mock_get_client,
+            patch(
+                "bitbucket_mcp.tools.users.get_current_repo",
+                return_value=MagicMock(repository="test-repo", workspace="test-workspace"),
+            ),
+        ):
             mock_client = MagicMock()
-            mock_client.get_default_reviewers = AsyncMock(
-                return_value=[sample_default_reviewer]
-            )
+            mock_client.get_default_reviewers = AsyncMock(return_value=[sample_default_reviewer])
             mock_get_client.return_value = mock_client
 
             result = await tools["get_default_reviewers"]()

@@ -80,9 +80,7 @@ class Memory:
             repository=data.get("repository"),
         )
 
-    def matches_context(
-        self, workspace: str | None = None, repository: str | None = None
-    ) -> bool:
+    def matches_context(self, workspace: str | None = None, repository: str | None = None) -> bool:
         """Check if this memory applies to the given context."""
         # Global memories apply everywhere
         if self.workspace is None:
@@ -302,7 +300,9 @@ class MemoryManager:
                 continue
 
             # Search in content and tags
-            if query_lower in memory.content.lower() or any(query_lower in tag.lower() for tag in memory.tags):
+            if query_lower in memory.content.lower() or any(
+                query_lower in tag.lower() for tag in memory.tags
+            ):
                 results.append(memory)
 
         return results

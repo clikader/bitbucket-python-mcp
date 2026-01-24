@@ -109,11 +109,13 @@ def register_user_tools(mcp: FastMCP) -> None:
             # Format emails
             email_list = []
             for email in emails:
-                email_list.append({
-                    "email": email.get("email"),
-                    "is_primary": email.get("is_primary", False),
-                    "is_confirmed": email.get("is_confirmed", False),
-                })
+                email_list.append(
+                    {
+                        "email": email.get("email"),
+                        "is_primary": email.get("is_primary", False),
+                        "is_confirmed": email.get("is_confirmed", False),
+                    }
+                )
 
             return json.dumps(
                 {
@@ -290,12 +292,14 @@ def register_user_tools(mcp: FastMCP) -> None:
         users = []
         for member in members:
             user = member.get("user", {})
-            users.append({
-                "account_id": user.get("account_id", ""),
-                "uuid": user.get("uuid", ""),
-                "display_name": user.get("display_name", ""),
-                "nickname": user.get("nickname", ""),
-            })
+            users.append(
+                {
+                    "account_id": user.get("account_id", ""),
+                    "uuid": user.get("uuid", ""),
+                    "display_name": user.get("display_name", ""),
+                    "nickname": user.get("nickname", ""),
+                }
+            )
 
         return json.dumps(
             {
@@ -356,12 +360,14 @@ def register_user_tools(mcp: FastMCP) -> None:
 
         formatted = []
         for reviewer in reviewers:
-            formatted.append({
-                "account_id": reviewer.get("account_id", ""),
-                "uuid": reviewer.get("uuid", ""),
-                "display_name": reviewer.get("display_name", ""),
-                "nickname": reviewer.get("nickname", ""),
-            })
+            formatted.append(
+                {
+                    "account_id": reviewer.get("account_id", ""),
+                    "uuid": reviewer.get("uuid", ""),
+                    "display_name": reviewer.get("display_name", ""),
+                    "nickname": reviewer.get("nickname", ""),
+                }
+            )
 
         return json.dumps(
             {

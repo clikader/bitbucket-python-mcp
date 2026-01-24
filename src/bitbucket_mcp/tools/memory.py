@@ -358,9 +358,7 @@ def register_memory_tools(mcp: FastMCP) -> None:
                 "status": "success",
                 "message": "Learning extracted and stored from PR comment",
                 "source_comment": (
-                    comment_content[:200] + "..."
-                    if len(comment_content) > 200
-                    else comment_content
+                    comment_content[:200] + "..." if len(comment_content) > 200 else comment_content
                 ),
                 "memory": _format_memory(memory),
             },
